@@ -4,15 +4,13 @@ import axios from 'axios'
 
 Vue.use(Vuex)
 
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition
-const SpeechGrammarList =
-  window.SpeechGrammarList || window.webkitSpeechGrammarList
-const SpeechRecognitionEvent =
-  window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+const SpeechGrammarList = window.SpeechGrammarList || window.webkitSpeechGrammarList
+const SpeechRecognitionEvent = window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent
 
 if (!SpeechRecognition) {
   // uh shit browser doesn't support speech, do things here
+  console.log("Your browser doesn't support speechrecognition. Please upgrade")
 }
 
 const recognition = new SpeechRecognition()
@@ -31,7 +29,7 @@ export default new Vuex.Store({
     // listening - listening to user input
     // fetching - fetching user data from the API
     uiState: 'idle',
-    zoom: 3
+    zoom: 3,
   },
   getters: {
     intentStr: state => {
@@ -43,7 +41,7 @@ export default new Vuex.Store({
       var str = state.intensity
       str = str.replace(/\b(Intensity.)\b/gi, '')
       return str
-    }
+    },
   },
   mutations: {
     newIntent: (state, { intent, score }) => {
@@ -87,16 +85,14 @@ export default new Vuex.Store({
         default:
           state.zoom = 3 + state.counter
       }
-    }
+    },
   },
   actions: {
     getSpeech({ dispatch, commit, state }) {
       commit('setUiState', 'listening')
 
       //keep recording speech all the time or activate it- for the first screen no, press a button. second screen yes.
-      state.intent === 'None'
-        ? (recognition.continuous = true)
-        : (recognition.continuous = false)
+      state.intent === 'None' ? (recognition.continuous = true) : (recognition.continuous = false)
 
       recognition.start()
 
@@ -109,7 +105,7 @@ export default new Vuex.Store({
 
     getUnderstanding({ commit }, utterance) {
       commit('setUiState', 'fetching')
-      const url = `https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/4aba2274-c5df-4b0d-8ff7-57658254d042`
+      const url = `https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/3db064c8-6fab-418a-9f19-1f101b0c6587`
 
       https: axios({
         method: 'get',
@@ -117,19 +113,19 @@ export default new Vuex.Store({
         params: {
           verbose: true,
           timezoneOffset: 0,
-          q: utterance
+          q: utterance,
         },
         headers: {
           'Content-Type': 'application/json',
-          'Ocp-Apim-Subscription-Key': '6c85f08d11e84b59b655b8a919b9e286'
-        }
+          'Ocp-Apim-Subscription-Key': 'ce00d3e6e9ea4c619560645de5ece30f',
+        },
       })
         .then(({ data }) => {
           console.log('axios result', data)
           if (altMaps.hasOwnProperty(data.query)) {
             commit('newIntent', {
               intent: altMaps[data.query],
-              score: 1
+              score: 1,
             })
           } else {
             commit('newIntent', data.topScoringIntent)
@@ -140,8 +136,8 @@ export default new Vuex.Store({
         .catch(err => {
           console.error('axios error', err)
         })
-    }
-  }
+    },
+  },
 })
 
 // if it keeps thinking you're saying something else, add here:
@@ -187,5 +183,5 @@ const altMaps = {
   paris: 'App.Nervous',
   Paris: 'App.Nervous',
   nurse: 'App.Nervous',
-  tipton: 'App.Tipsy'
+  tipton: 'App.Tipsy',
 }
